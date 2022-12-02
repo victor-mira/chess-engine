@@ -1,15 +1,16 @@
 import com.github.bhlangonijr.chesslib.Board;
+import com.github.bhlangonijr.chesslib.Side;
 import com.github.bhlangonijr.chesslib.move.Move;
 
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 public class UCI {
 
     static Board board = new Board();
 
-    static String ENGINE_NAME = "BCE";
+    static String ENGINE_NAME = "BCEv2";
     static String AUTHOR_NAME = "Victor Mira";
+    static Random random = new Random();
 
     public static void startUCI() {
         Scanner input = new Scanner(System.in);
@@ -34,13 +35,24 @@ public class UCI {
                 inputPosition(inputString);
             }
             else if (inputString.contains("go")) {
-                inputGo();
+                try {
+                    inputGo();
+                } catch (IndexOutOfBoundsException e) {
+                    System.out.println("err");
+                    e.printStackTrace();
+                }
             }
             else if ("print".equals(inputString)) {
                 inputPrint();
             }
             else if ("quit".equals(inputString)) {
                 inputQuit();
+            }
+            else if ("evaluate".equals(inputString)) {
+                inputEvaluate();
+            }
+            else if ("bestscore".equals(inputString)) {
+                inputBestScore();
             }
         }
     }
@@ -84,10 +96,40 @@ public class UCI {
         // Search Best solution
         // Random moves for now
         List<Move> possiblesMoves = board.legalMoves();
-        int rndIndex = (int) Math.floor(Math.random() * (possiblesMoves.size() + 1));
-        board.doMove(possiblesMoves.get(rndIndex));
-        System.out.println("bestmove " + possiblesMoves.get(rndIndex).toString());
+        Side playerSide = board.getSideToMove();
+        Collections.sort(possiblesMoves, Comparator.comparingInt(move -> Evaluation.evaluateMove(board, move, playerSide)));
+        // int rndIndex = (int) Math.floor(Math.random() * (possiblesMoves.size()));
+/*        int rndIndex = random.nextInt(possiblesMoves.size() - 1);
+        for (int i = 0; i < possiblesMoves.size(); i++) {
+            if (rndIndex == i || rndIndex == possiblesMoves.size()) {
+                System.out.println("bestmove " + possiblesMoves.get(i).toString());
+                board.doMove(possiblesMoves.get(i));
+            }
+        }*/
+
+        Board newBoard;
+        long bestScore = Long.MIN_VALUE;
+        SearchAlgorithm.bestMove = null;
+
+        System.out.println("best score: " + SearchAlgorithm.minmax(board, true, 0, playerSide));
+
+        /*for (Move move: board.legalMoves()) {
+            newBoard = board.clone();
+            newBoard.doMove(move);
+*//*            long score = PrincipalVariation.pvs(Integer.MIN_VALUE, Integer.MAX_VALUE, newBoard, 1);*//*
+            long score = PrincipalVariation.minmax(newBoard, true, 0, playerSide);
+            System.out.println("move : " + move.toString() + " score : " + score);
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+        }*/
+
+        System.out.println("bestmove " + SearchAlgorithm.bestMove.toString());
+        board.doMove(SearchAlgorithm.bestMove);
     }
+
+
 
     private static void inputPrint() {
         // print board
@@ -96,6 +138,15 @@ public class UCI {
 
     private static void inputQuit() {
         System.exit(0);
+    }
+
+    private static void inputEvaluate() {
+        System.out.println(Evaluation.evaluate(board, Side.WHITE));
+    }
+
+    private static void inputBestScore() {
+/*        long bestScore = PrincipalVariation.pvs(Integer.MIN_VALUE, Integer.MAX_VALUE, board, 1);
+        System.out.println(bestScore);*/
     }
 
 
