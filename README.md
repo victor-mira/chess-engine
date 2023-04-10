@@ -1,2 +1,2 @@
-# Bell-Chess-Engine
- Chess engine implementation using UCI protocol and minMax algrithm
+Chess Engine in Java
+Implementation using UCI protocol and minMax algrithm
